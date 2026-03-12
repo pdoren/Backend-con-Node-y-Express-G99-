@@ -36,6 +36,10 @@ Body esperado:
 
 Actualiza los datos de una publicación existente.
 
+### PUT `/posts/like/:id`
+
+Agrega un like por id (params).
+
 ### DELETE `/posts/:id`
 
 Elimina una publicación del repertorio.
