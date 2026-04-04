@@ -1,8 +1,10 @@
 // index.js
 require("dotenv").config();
 
-const { insertUser, getUserByEmail, existsUserByEmail, getAllUsers } = require("./db/users");
+const { insertUser, getUserByEmail, existsUserByEmail } = require("./db/users");
 const { authMiddleware, getToken } = require("./middlewares/auth");
+const reportMiddleware = require("./middlewares/reportMiddleware");
+const { registerCredentialsMiddleware, loginCredentialsMiddleware } = require("./middlewares/credentialsMiddleware");
 
 const express = require("express");
 const cors = require("cors");
@@ -26,21 +28,14 @@ if (!process.env.JWT_SECRET) {
 
 app.use(cors()); // Por diferencias entre el puerto del frontend y backend, es necesario para evitar bloqueos de CORS
 app.use(express.json()); // middleware para parsear el body de la petición
+app.use(reportMiddleware); // middleware para reportar las peticiones
 
 // ---------- Rutas ----------
 
 // POST /usuarios -> registro de usuarios
-app.post("/usuarios", async (req, res) => {
+app.post("/usuarios", registerCredentialsMiddleware, async (req, res) => {
   try {
     const { email, password, rol, lenguage } = req.body;
-
-    if (!email || !password || !rol || !lenguage) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
-    }
-
-    if (!email.includes("@")) {
-      return res.status(400).json({ error: "Formato de email inválido" });
-    }
 
     // Validar si el usuario ya existe
     const userExists = await existsUserByEmail(email);
@@ -66,15 +61,9 @@ app.post("/usuarios", async (req, res) => {
 });
 
 // POST /login -> login de usuarios
-app.post("/login", async (req, res) => {
+app.post("/login", loginCredentialsMiddleware, async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ error: "Email y password son obligatorios" });
-    }
 
     // Validar si el usuario existe
     const user = await getUserByEmail(email);
